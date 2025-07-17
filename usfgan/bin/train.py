@@ -21,14 +21,13 @@ import librosa.display
 import matplotlib
 import numpy as np
 import torch
+import usfgan
+import usfgan.models
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
-import usfgan
-import usfgan.models
 from usfgan.datasets import AudioFeatDataset
 from usfgan.utils.features import SignalGenerator
 
@@ -669,7 +668,7 @@ class Collater(object):
         assert len(x) == len(contf0) * self.hop_size
 
 
-@hydra.main(config_path="config", config_name="train", version_base=None)
+@hydra.main(config_path="config", config_name="train")
 def main(config: DictConfig) -> None:
     """Run training process."""
 

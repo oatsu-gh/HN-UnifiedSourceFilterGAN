@@ -3,25 +3,20 @@
 """Setup Unified Source-Filter GAN Library."""
 
 import os
-import platform
+import sys
+from distutils.version import LooseVersion
 
 import pip
-from packaging.version import parse
 from setuptools import find_packages, setup
 
-# Check python version
-python_version = platform.python_version()
-if parse(python_version) < parse("3.7"):
+if LooseVersion(sys.version) < LooseVersion("3.7"):
     raise RuntimeError(
-        f"usfgan requires Python>=3.7, but your Python is {python_version}"
+        "usfgan requires Python>=3.7, " "but your Python is {}".format(sys.version)
     )
-
-# Check pip version
-pip_version = pip.__version__
-if parse(pip_version) < parse("21.0.0"):
+if LooseVersion(pip.__version__) < LooseVersion("21.0.0"):
     raise RuntimeError(
-        f"pip>=21.0.0 is required, but your pip is {python_version}. "
-        'Try again after "pip install -U pip"'
+        "pip>=21.0.0 is required, but your pip is {}. "
+        'Try again after "pip install -U pip"'.format(pip.__version__)
     )
 
 requirements = {
