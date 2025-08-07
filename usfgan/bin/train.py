@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright 2022 Reo Yoneyama (Nagoya University)
 #  MIT License (https://opensource.org/licenses/MIT)
 
@@ -44,7 +42,7 @@ def num_trainable_params(model):
     return sum([np.prod(p.size()) for p in parameters])
 
 
-class Trainer(object):
+class Trainer:
     """Customized trainer module for Unified Source-Filter GAN training."""
 
     def __init__(
@@ -167,6 +165,11 @@ class Trainer(object):
         x = tuple([x_.to(self.device) for x_ in x])
         z, c, df, f0 = x
         y_real = y.to(self.device)
+
+        # schedulefree optimizers need training
+        for key in ["generator", "discriminator"]:
+            if type(self.optimizer[key]).__module__.startswith("schedulefree."):
+                self.optimizer[key].train()
 
         # generator forward
         y_fake, s = self.model["generator"](z, c, df)[:2]
@@ -378,7 +381,9 @@ class Trainer(object):
         # change mode
         for key in self.model.keys():
             self.model[key].eval()
-
+            # schedulefree optimizers need evaluation
+            if type(self.optimizer[key]).__module__.startswith("schedulefree."):
+                self.optimizer[key].eval()
         # calculate loss for each batch
         for eval_steps_per_epoch, batch in enumerate(
             tqdm(self.data_loader["valid"], desc="[eval]"), 1
@@ -413,6 +418,9 @@ class Trainer(object):
         # restore mode
         for key in self.model.keys():
             self.model[key].train()
+            # schedulefree optimizers need training
+            if type(self.optimizer[key]).__module__.startswith("schedulefree."):
+                self.optimizer[key].train()
 
     @torch.no_grad()
     def _genearete_and_save_intermediate_result(self, batch):
@@ -505,7 +513,7 @@ class Trainer(object):
                 fig = plt.figure(figsize=(6, 4))
                 plt.imshow(a_batch.squeeze(0).cpu().numpy(), aspect="auto")
                 plt.colorbar()
-                self.writer.add_figure(f"aperiodicity", fig, self.steps)
+                self.writer.add_figure("aperiodicity", fig, self.steps)
                 plt.clf()
                 plt.close()
 
@@ -545,7 +553,7 @@ class Trainer(object):
             self.finish_train = True
 
 
-class Collater(object):
+class Collater:
     """Customized collater for Pytorch DataLoader in training."""
 
     def __init__(
@@ -557,7 +565,7 @@ class Collater(object):
         sine_amp=0.1,
         noise_amp=0.003,
         sine_f0_type="contf0",
-        signal_types=["sine", "noise"],
+        signal_types=["sine", "noise"],  # noqa: B006
     ):
         """Initialize customized collater for PyTorch DataLoader.
 
@@ -616,8 +624,7 @@ class Collater(object):
                 start_step = start_frame * self.hop_size
                 y = x[start_step : start_step + self.batch_max_length]
                 c = c[
-                    start_frame
-                    - self.aux_context_window : start_frame
+                    start_frame - self.aux_context_window : start_frame
                     + self.aux_context_window
                     + self.batch_max_frames
                 ]
@@ -688,7 +695,7 @@ def main(config: DictConfig) -> None:
     torch.cuda.manual_seed(config.seed)
     os.environ["PYTHONHASHSEED"] = str(config.seed)
 
-    config.out_dir =hydra.utils.to_absolute_path(config.out_dir)
+    config.out_dir = hydra.utils.to_absolute_path(config.out_dir)
 
     # check directory existence
     if not os.path.exists(config.out_dir):
@@ -791,9 +798,8 @@ def main(config: DictConfig) -> None:
 
     for name in model.keys():
         logger.info(
-            f"[{name}] " + "Number of trainable params: {:.3f} million".format(
-                num_trainable_params(model[name]) / 1000000.0
-            )
+            f"[{name}] "
+            + f"Number of trainable params: {num_trainable_params(model[name]) / 1000000.0:.3f} million"
         )
 
     if config.train.lambda_feat_match > 0:
@@ -859,9 +865,7 @@ def main(config: DictConfig) -> None:
         trainer.run()
     except KeyboardInterrupt:
         trainer.save_checkpoint(
-            os.path.join(
-                config.out_dir, f"checkpoint-{trainer.steps}steps.pkl"
-            )
+            os.path.join(config.out_dir, f"checkpoint-{trainer.steps}steps.pkl")
         )
         logger.info(f"Successfully saved checkpoint @ {trainer.steps}steps.")
 
