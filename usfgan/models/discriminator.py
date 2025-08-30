@@ -67,7 +67,7 @@ class PWGDiscriminator(nn.Module):
             if i == 0:
                 dilation = 1
             else:
-                dilation = i if dilation_factor == 1 else dilation_factor ** i
+                dilation = i if dilation_factor == 1 else dilation_factor**i
                 conv_in_channels = conv_channels
             padding = (kernel_size - 1) // 2 * dilation
             conv_layer = [
@@ -125,7 +125,7 @@ class PWGDiscriminator(nn.Module):
 
         def _apply_weight_norm(m):
             if isinstance(m, nn.Conv1d) or isinstance(m, nn.Conv2d):
-                nn.utils.weight_norm(m)
+                nn.utils.parametrizations.weight_norm(m)
                 logger.debug(f"Weight norm is applied to {m}.")
 
         self.apply(_apply_weight_norm)
@@ -263,7 +263,7 @@ class HiFiGANPeriodDiscriminator(nn.Module):
 
         def _apply_weight_norm(m):
             if isinstance(m, nn.Conv2d):
-                nn.utils.weight_norm(m)
+                nn.utils.parametrizations.weight_norm(m)
                 logger.debug(f"Weight norm is applied to {m}.")
 
         self.apply(_apply_weight_norm)
@@ -489,7 +489,7 @@ class HiFiGANScaleDiscriminator(nn.Module):
 
         def _apply_weight_norm(m):
             if isinstance(m, nn.Conv2d):
-                nn.utils.weight_norm(m)
+                nn.utils.parametrizations.weight_norm(m)
                 logger.debug(f"Weight norm is applied to {m}.")
 
         self.apply(_apply_weight_norm)
@@ -819,7 +819,7 @@ class UnivNetSpectralDiscriminator(nn.Module):
 
         def _apply_weight_norm(m):
             if isinstance(m, nn.Conv2d):
-                nn.utils.weight_norm(m)
+                nn.utils.parametrizations.weight_norm(m)
                 logger.debug(f"Weight norm is applied to {m}.")
 
         self.apply(_apply_weight_norm)
