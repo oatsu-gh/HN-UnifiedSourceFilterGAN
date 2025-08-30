@@ -19,13 +19,14 @@ import librosa.display
 import matplotlib
 import numpy as np
 import torch
-import usfgan
-import usfgan.models
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig, OmegaConf
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+import usfgan
+import usfgan.models
 from usfgan.datasets import AudioFeatDataset
 from usfgan.utils.features import SignalGenerator
 
@@ -55,7 +56,7 @@ class Trainer:
         criterion,
         optimizer,
         scheduler,
-        device=torch.device("cpu"),
+        device=None,
     ):
         """Initialize trainer.
 
@@ -71,6 +72,7 @@ class Trainer:
             device (torch.deive): Pytorch device instance.
 
         """
+        device = torch.device("cpu") if device is None else device  # use CPU as default
         self.config = config
         self.steps = steps
         self.epochs = epochs
@@ -88,7 +90,10 @@ class Trainer:
     def run(self):
         """Run training."""
         self.tqdm = tqdm(
-            initial=self.steps, total=self.config.train.train_max_steps, desc="[train]"
+            initial=self.steps,
+            total=self.config.train.train_max_steps,
+            desc="[train]",
+            colour="green",
         )
         while True:
             # train one epoch
@@ -275,7 +280,9 @@ class Trainer:
 
     def _train_epoch(self):
         """Train model one epoch."""
-        for train_steps_per_epoch, batch in enumerate(self.data_loader["train"], 1):
+        train_steps_per_epoch = 0
+        for idx, batch in enumerate(self.data_loader["train"], 1):
+            train_steps_per_epoch = idx
             # train one step
             self._train_step(batch)
 
@@ -675,7 +682,7 @@ class Collater:
         assert len(x) == len(contf0) * self.hop_size
 
 
-@hydra.main(config_path="config", config_name="train")
+@hydra.main(config_path="config", config_name="train", version_base="1.1")
 def main(config: DictConfig) -> None:
     """Run training process."""
 
@@ -704,7 +711,7 @@ def main(config: DictConfig) -> None:
     # write config to yaml file
     with open(os.path.join(config.out_dir, "config.yaml"), "w") as f:
         f.write(OmegaConf.to_yaml(config))
-    logger.info(OmegaConf.to_yaml(config))
+    logger.info("\n" + OmegaConf.to_yaml(config))
 
     # get dataset
     if config.data.remove_short_samples:
