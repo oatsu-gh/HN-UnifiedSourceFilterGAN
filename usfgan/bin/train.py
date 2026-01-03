@@ -29,6 +29,7 @@ import usfgan
 import usfgan.models
 from usfgan.datasets import AudioFeatDataset
 from usfgan.utils.features import SignalGenerator
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 # set to avoid matplotlib error in CLI environment
 matplotlib.use("Agg")
@@ -95,13 +96,14 @@ class Trainer:
             desc="[train]",
             colour="green",
         )
-        while True:
-            # train one epoch
-            self._train_epoch()
+        with logging_redirect_tqdm():
+            while True:
+                # train one epoch
+                self._train_epoch()
 
-            # check whether training is finished
-            if self.finish_train:
-                break
+                # check whether training is finished
+                if self.finish_train:
+                    break
 
         self.tqdm.close()
         logger.info("Finished training.")
