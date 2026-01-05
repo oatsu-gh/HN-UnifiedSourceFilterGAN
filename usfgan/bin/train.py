@@ -14,6 +14,7 @@ import sys
 from collections import defaultdict
 from logging import getLogger
 
+import colored_traceback.always  # noqa: F401
 import hydra
 import librosa.display
 import matplotlib
@@ -144,7 +145,7 @@ class Trainer:
             load_only_params (bool): Whether to load only model parameters.
 
         """
-        state_dict = torch.load(checkpoint_path, map_location="cpu")
+        state_dict = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
         self.model["generator"].load_state_dict(state_dict["model"]["generator"])
         self.model["discriminator"].load_state_dict(
             state_dict["model"]["discriminator"]
